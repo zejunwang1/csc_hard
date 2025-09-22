@@ -13,6 +13,7 @@ def parse_args():
     parser.add_argument("--confusion_set", type=str, required=True)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--N", type=int, default=1)
+    parser.add_argument("--pairwise", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -50,11 +51,14 @@ def do_mask(sent, args, output):
         for j in hits:
             word = cws[j]
             target = random.choice(args.confusion_set[word])
-            if word not in args.replace:
-                args.replace[word] = 0
+            key = word
+            if args.pairwise:
+                key = word + '_' + target
+            if key not in args.replace:
+                args.replace[key] = 0
             else:
-                args.replace[word] += 1
-            if args.replace[word] < args.N:
+                args.replace[key] += 1
+            if args.replace[key] < args.N:
                 cws[j] = target
                 source = ''.join(cws)
                 label = int(source != sent)
