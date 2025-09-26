@@ -2,8 +2,8 @@
 
 import argparse
 import json
-import jieba
 import random
+from ltp import LTP
 from tqdm import tqdm
 
 def parse_args():
@@ -11,6 +11,7 @@ def parse_args():
     parser.add_argument("--input", type=str, required=True)
     parser.add_argument("--output", type=str, required=True)
     parser.add_argument("--confusion_set", type=str, required=True)
+    parser.add_argument("--ltp_model", type=str, required=True)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--N", type=int, default=1)
     parser.add_argument("--pairwise", action="store_true")
@@ -35,13 +36,20 @@ def load_confusion_set(path):
     return confusion_set
 
 def do_mask(sent, args, output):
-    # jieba分词
+    # 分词和词性标注
+    cws, pos = args.ltp.pipeline(sent, tasks=["cws", "pos"], return_dict=False)
+
     hits = []
-    cws = jieba.lcut(sent)
     for i in range(len(cws)):
         word = cws[i]
         if len(word) > 2 or not isChinese(word):
             continue
+        # 人名地名
+        if pos[i] in ['nh', 'ns']:
+            continue
+        # '地' + 动词
+        #if pos[i] != 'u' or i == len(cws) - 1:   continue
+        #if i < len(cws) - 1 and pos[i + 1][0] != 'v':   continue
         if word not in args.confusion_set:
             continue
         hits.append(i)
@@ -76,6 +84,9 @@ if __name__ == "__main__":
     # 混淆集
     args.confusion_set = load_confusion_set(args.confusion_set)
 
+    # LTP/legacy
+    args.ltp = LTP(args.ltp_model)
+    
     sents = []
     with open(args.input, mode='r', encoding='utf-8') as handle:
         for line in handle:
