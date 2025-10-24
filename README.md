@@ -38,3 +38,6 @@ python confuse_replace_ltp.py \
 ```
 
 `--ltp_model` 参数输入使用的 LTP 分词模型路径。
+
+`news_paper.jsonl` 为基于新闻报纸数据构造且经过人工检查的 4000+ 条拼写纠错数据集。
+
